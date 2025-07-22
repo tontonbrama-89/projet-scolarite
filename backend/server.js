@@ -11,16 +11,11 @@ app.use(express.json());
 // 📂 Servir le frontend (tableau de bord)
 app.use(express.static(path.join(__dirname, '../frontend')));
 
-// 🔐 Middleware : Protection par clé API
-app.use('/api', (req, res, next) => {
-  const apiKey = req.headers['x-api-key'];
-  if (apiKey !== process.env.API_KEY) {
-    return res.status(403).json({ error: 'Accès refusé : clé API invalide.' });
-  }
-  next();
-});
+// 🔐 Middleware : Protection API
+const apiKeyMiddleware = require('./middlewares/apiKeyMiddleware');
+app.use('/api', apiKeyMiddleware);
 
-// 🔌 Connexion à la base de données au démarrage
+// 🔌 Connexion DB
 pool.query('SELECT NOW()')
   .then(result => {
     console.log('🟢 Connexion DB établie au démarrage — Heure serveur :', result.rows[0].now);
@@ -29,7 +24,7 @@ pool.query('SELECT NOW()')
     console.error('❌ Connexion DB échouée au démarrage :', error);
   });
 
-// 📚 Importation des routes API
+// 📚 Routes API
 const eleveRoutes = require('./routes/eleveRoutes');
 const classeRoutes = require('./routes/classeRoutes');
 const enseignantRoutes = require('./routes/enseignantRoutes');
@@ -38,9 +33,8 @@ const bulletinRoutes = require('./routes/bulletinRoutes');
 const matiereRoutes = require('./routes/matiereRoutes');
 const paiementRoutes = require('./routes/paiementRoutes');
 const statsRoutes = require('./routes/statsRoutes');
+const recuRoutes = require('./routes/recuRoutes');  // 🔒 Route dédiée reçus
 
-
-// 📢 Activation des routes API
 app.use('/api/eleves', eleveRoutes);
 app.use('/api/classes', classeRoutes);
 app.use('/api/enseignants', enseignantRoutes);
@@ -49,15 +43,16 @@ app.use('/api/bulletins', bulletinRoutes);
 app.use('/api/matieres', matiereRoutes);
 app.use('/api/paiements', paiementRoutes);
 app.use('/api/stats', statsRoutes);
+app.use('/api/recus', recuRoutes);   // 📥 Endpoint sécurisé pour reçus PDF
 
-console.log('📢 Routes API élèves, classes, enseignants, notes, bulletins, matières et paiements activées');
+console.log('📢 Routes API activées (élèves, classes, enseignants, notes, bulletins, matières, paiements, stats, recus)');
 
-// 🚪 Route par défaut (optionnelle)
+// 🚪 Route par défaut
 app.get('/api', (req, res) => {
   res.send('✅ Backend scolarité opérationnel');
 });
 
-// 🚀 Démarrage du serveur
+// 🚀 Démarrage serveur
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`✅ Serveur lancé sur le port ${PORT}`);

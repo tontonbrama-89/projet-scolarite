@@ -9,33 +9,39 @@
             padding: 20px;
             background-color: #f7f7f7;
         }
-
         h1 {
             text-align: center;
             color: #333;
         }
-
         table {
             width: 80%;
             margin: 20px auto;
             border-collapse: collapse;
         }
-
         th, td {
             border: 1px solid #ddd;
             padding: 10px;
             text-align: center;
         }
-
         th {
             background-color: #f2f2f2;
         }
-
         .total {
             font-weight: bold;
             font-size: 18px;
             margin: 20px;
             text-align: center;
+        }
+        button {
+            background-color: #2196F3;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #1976D2;
         }
     </style>
 </head>
@@ -53,50 +59,68 @@
                 <th>Mode</th>
                 <th>Date</th>
                 <th>Référence</th>
+                <th>Reçu PDF</th>
             </tr>
         </thead>
-        <tbody>
-            <!-- Paiements ajoutés ici -->
-        </tbody>
+        <tbody></tbody>
     </table>
 
     <script>
-    const API_KEY = 'monapikeysecrete123';  // 🔑 Ta clé API
+        const API_KEY = 'monapikeysecrete123';  // Remplace par ta clé API réelle
+        const urlParams = new URLSearchParams(window.location.search);
+        const eleveId = urlParams.get('eleve_id');
 
-    const urlParams = new URLSearchParams(window.location.search);
-    const eleveId = urlParams.get('eleve_id');
+        if (!eleveId) {
+            document.body.innerHTML = "<p style='color:red;text-align:center;'>ID élève invalide.</p>";
+        } else {
+            fetch(`http://localhost:3000/api/paiements/eleve/${eleveId}`, {
+                headers: { 'x-api-key': API_KEY }
+            })
+            .then(res => res.json())
+            .then(data => {
+                const tbody = document.querySelector('#paiementsTable tbody');
+                data.paiements.forEach(p => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${p.id}</td>
+                        <td>${parseFloat(p.montant).toFixed(2)} FCFA</td>
+                        <td>${p.mode_paiement}</td>
+                        <td>${new Date(p.date_paiement).toLocaleDateString()}</td>
+                        <td>${p.reference || '-'}</td>
+                        <td><button onclick="telechargerRecu(${p.id})">📄 Reçu PDF</button></td>
+                    `;
+                    tbody.appendChild(row);
+                });
 
-    if (!eleveId) {
-        document.body.innerHTML = "<p style='color:red;text-align:center;'>ID élève invalide.</p>";
-    } else {
-        fetch(`http://localhost:3000/api/paiements/eleve/${eleveId}`, {
-            headers: {
-                'x-api-key': API_KEY   // ✅ Ajoute la clé API ici
-            }
-        })
-        .then(res => res.json())
-        .then(data => {
-            const tbody = document.querySelector('#paiementsTable tbody');
-            data.paiements.forEach(p => {
-                const row = document.createElement('tr');
-                row.innerHTML = `
-                    <td>${p.id}</td>
-                    <td>${parseFloat(p.montant).toFixed(2)} FCFA</td>
-                    <td>${p.mode_paiement}</td>
-                    <td>${new Date(p.date_paiement).toLocaleDateString()}</td>
-                    <td>${p.reference || '-'}</td>
-                `;
-                tbody.appendChild(row);
+                document.getElementById('totalPaye').innerText =
+                    "Total payé : " + parseFloat(data.total_paye).toFixed(2) + " FCFA";
+            })
+            .catch(() => {
+                document.body.innerHTML = "<p style='color:red;text-align:center;'>Erreur de chargement.</p>";
             });
+        }
 
-            document.getElementById('totalPaye').innerText =
-                "Total payé : " + parseFloat(data.total_paye).toFixed(2) + " FCFA";
-        })
-        .catch(() => {
-            document.body.innerHTML = "<p style='color:red;text-align:center;'>Erreur de chargement.</p>";
-        });
-    }
-</script>
+        function telechargerRecu(idPaiement) {
+            fetch(`http://localhost:3000/api/recus/${idPaiement}`, {
+                method: 'GET',
+                headers: { 'x-api-key': API_KEY }
+            })
+            .then(res => {
+                if (!res.ok) throw new Error('Erreur lors du téléchargement');
+                return res.blob();
+            })
+            .then(blob => {
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `recu_paiement_${idPaiement}.pdf`;
+                document.body.appendChild(a);
+                a.click();
+                a.remove();
+            })
+            .catch(() => alert('❌ Téléchargement impossible : clé API invalide ou serveur inaccessible.'));
+        }
+    </script>
 
 </body>
 </html>

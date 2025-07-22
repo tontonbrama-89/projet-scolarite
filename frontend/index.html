@@ -2,107 +2,68 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <title>Tableau de bord - Élèves</title>
+    <title>Liste des élèves</title>
     <style>
         body {
             font-family: Arial, sans-serif;
             background-color: #f9f9f9;
-            margin: 0;
             padding: 20px;
         }
-
         h2 {
             text-align: center;
-            color: #333;
         }
-
-        .refresh-btn {
-            display: block;
-            margin: 10px auto 20px;
-            padding: 10px 20px;
-            font-size: 14px;
-            background-color: #4CAF50;
-            color: white;
-            border: none;
-            cursor: pointer;
-            border-radius: 5px;
-        }
-
-        .refresh-btn:hover {
-            background-color: #45a049;
-        }
-
         table {
-            width: 90%;
-            margin: 0 auto 20px;
+            width: 80%;
+            margin: 20px auto;
             border-collapse: collapse;
         }
-
         th, td {
             border: 1px solid #ddd;
             padding: 10px;
             text-align: center;
         }
-
         th {
             background-color: #f2f2f2;
         }
-
         button {
-            background-color: #2196F3;
+            background-color: #4CAF50;
             color: white;
             border: none;
             padding: 5px 10px;
             border-radius: 4px;
             cursor: pointer;
         }
-
         button:hover {
-            background-color: #1976D2;
-        }
-
-        .error {
-            color: red;
-            text-align: center;
-            margin-top: 20px;
+            background-color: #45a049;
         }
     </style>
 </head>
 <body>
 
-<h2>Liste des élèves</h2>
+    <h2>Liste des élèves</h2>
 
-<button class="refresh-btn" onclick="chargerEleves()">🔄 Rafraîchir la liste</button>
+    <table id="elevesTable">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Nom</th>
+                <th>Prénom</th>
+                <th>Classe</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody></tbody>
+    </table>
 
-<table id="elevesTable">
-    <thead>
-        <tr>
-            <th>ID</th>
-            <th>Nom</th>
-            <th>Prénom</th>
-            <th>Classe</th>
-            <th>Action</th>
-        </tr>
-    </thead>
-    <tbody>
-        <!-- Élèves ajoutés dynamiquement -->
-    </tbody>
-</table>
+    <script>
+        const API_KEY = 'monapikeysecrete123';
 
-<div class="error" id="errorMessage"></div>
-
-<script>
-    const API_KEY = 'monapikeysecrete123';  // Clé API
-
-    function chargerEleves() {
-        fetch('http://localhost:3000/api/eleves/', {
+        fetch('http://localhost:3000/api/eleves', {
             headers: { 'x-api-key': API_KEY }
         })
         .then(res => res.json())
         .then(data => {
             const tbody = document.querySelector('#elevesTable tbody');
-            tbody.innerHTML = '';
-
             data.forEach(eleve => {
                 const row = document.createElement('tr');
                 row.innerHTML = `
@@ -119,14 +80,8 @@
                 tbody.appendChild(row);
             });
         })
-        .catch(error => {
-            console.error('Erreur chargement élèves:', error);
-            document.getElementById('errorMessage').innerText = 'Erreur de chargement des élèves.';
-        });
-    }
-
-    chargerEleves();
-</script>
+        .catch(() => alert('❌ Erreur chargement des élèves.'));
+    </script>
 
 </body>
 </html>
