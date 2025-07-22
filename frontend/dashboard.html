@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Tableau de Bord - Admin</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            padding: 20px;
+            background-color: #f9f9f9;
+        }
+
+        h1 {
+            color: #333;
+        }
+
+        .stats {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 30px;
+            margin: 20px 0;
+        }
+
+        .stat {
+            background-color: #fff;
+            border: 1px solid #ddd;
+            padding: 20px;
+            width: 200px;
+            font-size: 18px;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        table {
+            margin: 20px auto;
+            width: 80%;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            padding: 10px;
+            border: 1px solid #ccc;
+        }
+
+        th {
+            background-color: #f0f0f0;
+        }
+
+        button {
+            padding: 5px 10px;
+            cursor: pointer;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+        }
+
+        button:hover {
+            background-color: #45a049;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Tableau de bord - Administration</h1>
+
+    <div class="stats">
+        <div class="stat">
+            Total paiements<br>
+            <strong id="totalPaiements">...</strong>
+        </div>
+        <div class="stat">
+            Nombre d'élèves<br>
+            <strong id="totalEleves">...</strong>
+        </div>
+        <div class="stat">
+            Nombre d'enseignants<br>
+            <strong id="totalEnseignants">...</strong>
+        </div>
+    </div>
+
+    <h2>Liste des élèves</h2>
+
+    <table id="elevesTable">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Nom</th>
+                <th>Prénom</th>
+                <th>Classe</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            <!-- Élèves ajoutés ici -->
+        </tbody>
+    </table>
+
+    <script>
+    const API_KEY = 'monapikeysecrete123';  // Remplace si nécessaire
+
+    // Charger les statistiques via /api/stats
+    fetch('http://localhost:3000/api/stats', {
+        headers: { 'x-api-key': API_KEY }
+    })
+    .then(res => res.json())
+    .then(data => {
+        document.getElementById('totalEleves').innerText = data.total_eleves;
+        document.getElementById('totalPaiements').innerText = Number(data.total_encaissé).toFixed(2) + ' FCFA';
+        document.getElementById('totalEnseignants').innerText = data.total_enseignants;
+    })
+    .catch(() => {
+        document.querySelector('.stats').innerHTML = '<p style="color:red;">Erreur chargement statistiques</p>';
+    });
+
+    // Charger la liste des élèves
+    fetch('http://localhost:3000/api/eleves', {
+        headers: { 'x-api-key': API_KEY }
+    })
+    .then(res => res.json())
+    .then(data => {
+        const tbody = document.querySelector('#elevesTable tbody');
+        tbody.innerHTML = ''; // Clear previous entries
+        data.forEach(eleve => {
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td>${eleve.id}</td>
+                <td>${eleve.nom}</td>
+                <td>${eleve.prenom}</td>
+                <td>${eleve.classe}</td>
+                <td>
+                    <button onclick="window.location.href='paiements.html?eleve_id=${eleve.id}'">
+                        Voir paiements
+                    </button>
+                </td>
+            `;
+            tbody.appendChild(row);
+        });
+    });
+</script>
+
+</body>
+</html>

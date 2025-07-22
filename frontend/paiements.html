@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Historique des paiements</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background-color: #f7f7f7;
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+
+        table {
+            width: 80%;
+            margin: 20px auto;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            border: 1px solid #ddd;
+            padding: 10px;
+            text-align: center;
+        }
+
+        th {
+            background-color: #f2f2f2;
+        }
+
+        .total {
+            font-weight: bold;
+            font-size: 18px;
+            margin: 20px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Historique des paiements de l'élève</h1>
+
+    <div class="total" id="totalPaye">Total payé : 0 FCFA</div>
+
+    <table id="paiementsTable">
+        <thead>
+            <tr>
+                <th>ID Paiement</th>
+                <th>Montant</th>
+                <th>Mode</th>
+                <th>Date</th>
+                <th>Référence</th>
+            </tr>
+        </thead>
+        <tbody>
+            <!-- Paiements ajoutés ici -->
+        </tbody>
+    </table>
+
+    <script>
+    const API_KEY = 'monapikeysecrete123';  // 🔑 Ta clé API
+
+    const urlParams = new URLSearchParams(window.location.search);
+    const eleveId = urlParams.get('eleve_id');
+
+    if (!eleveId) {
+        document.body.innerHTML = "<p style='color:red;text-align:center;'>ID élève invalide.</p>";
+    } else {
+        fetch(`http://localhost:3000/api/paiements/eleve/${eleveId}`, {
+            headers: {
+                'x-api-key': API_KEY   // ✅ Ajoute la clé API ici
+            }
+        })
+        .then(res => res.json())
+        .then(data => {
+            const tbody = document.querySelector('#paiementsTable tbody');
+            data.paiements.forEach(p => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${p.id}</td>
+                    <td>${parseFloat(p.montant).toFixed(2)} FCFA</td>
+                    <td>${p.mode_paiement}</td>
+                    <td>${new Date(p.date_paiement).toLocaleDateString()}</td>
+                    <td>${p.reference || '-'}</td>
+                `;
+                tbody.appendChild(row);
+            });
+
+            document.getElementById('totalPaye').innerText =
+                "Total payé : " + parseFloat(data.total_paye).toFixed(2) + " FCFA";
+        })
+        .catch(() => {
+            document.body.innerHTML = "<p style='color:red;text-align:center;'>Erreur de chargement.</p>";
+        });
+    }
+</script>
+
+</body>
+</html>
